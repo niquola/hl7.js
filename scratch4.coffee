@@ -1,5 +1,4 @@
-parse  = require('./src/hl7v2')
-bundle = require('./src/fhir').bundle
+hl7  = require('./src/hl7')
 
 ORU_R01 = ['PID',
              ['PV1',
@@ -35,9 +34,9 @@ OBX|3|NM|82435^CHLORIDE^GH|3|108|mmol/L|||||F|||20060922152300|GH
 OBX|4|NM|82374^CARBON DIOXIDE^GH|4|31|mmol/L|||||F|||20060922152300|GH
 """
 
-msg = parse(ORU_R01, msg_str)
+msg = hl7.v2.parse(ORU_R01, msg_str)
 
-res = bundle (bndl)->
+res = hl7.fhir.bundle (bndl)->
   msg 'PID', (pid)->
     bndl.$entry 'Patient', (pt)->
       pt_id = 'temporal'
