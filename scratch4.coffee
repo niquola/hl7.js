@@ -1,92 +1,63 @@
-pp = (a...)-> console.log(JSON.stringify(a))
+parse  = require('./src/hl7v2')
+bundle = require('./src/fhir').bundle
 
-get_in = (obj, path)->
-  for x in path
-    obj = obj[x]
-    break unless obj
-  obj
+ORU_R01 = ['PID',
+             ['PV1',
+              ['PV2']],
+             ['ORC',
+               ['OBR',
+                 ['NTE'],
+                 ['OBX', ['NTE']]]]]
 
-_is_vec = (x)-> Array.isArray(x)
+msg_str = """
+MSH|^~\`|674|GHC|SISRL|PAML|20060922162830|L674-200609221628310220|ORU^R01|ORU000016168|P|2.3|||AL |AL
+PID|1||1478895^4^M10^PA||XTEST^PATIENT^||19591123| F||||||||||||||||||||||
+PV1||E||E|||07369^DORIAN^ARMAND^H^^^MD^^^^^^^|||EMR||||||||E|visit-number|8814|5||||||||||||||||||001|OCCPD||||201101240700
+ORC|RE|F4334|51013174200601|||||^||||||||||||||||
+OBR|1|F4334|51013174200601|80048^BASIC METABOLIC PANEL|||20060922152300||||||||^^^^^|023901^PACLAB| ||||||^|CH|F|^^|^^^20060922162659^^GHA||^|||^^^^^^ ^^^^|^^^^^^^^^^|^^^^^^^^^^|^^^^^^^^^^||||||||||
+OBX|1|NM|84295^SODIUM^GH|1|145|mmol/L|||||F|||20060922152300|GH
+OBX|2|NM|84132^POTASSIUM^GH|2|5.2|mmol/L|||||F|||20060922152300|GH
+OBX|3|NM|82435^CHLORIDE^GH|3|108|mmol/L|||||F|||20060922152300|GH
+OBX|4|NM|82374^CARBON DIOXIDE^GH|4|31|mmol/L|||||F|||20060922152300|GH
+OBX|5|NM|82947^GLUCOSE^GH|5|76|MG/DL|||||F|||20060922152300|GH
+OBX|6|NM|84520^BUN^GH|6|22|MG/DL|||||F|||20060922152300|GH
+OBX|7|NM|82565^CREATININE^GH^2160-0^CREATININE:MCNC:PT:SER/PLAS:QN:^LN|7|1.3|MG/DL|||||F|||20060922152300|GH
+OBX|8|NM|82310^CALCIUM^GH|8|10.1|MG/DL|||||F|||20060922152300|GH
+OBX|9|NM|GFR-AA*H^GFR--AFRICAN AMERICAN^GH|9|46|ML/MIN|||||F|||20060922152300|GH
+OBX|10|NM|GFR*H^GFR--NON-AFRICAN AMERICAN^GH|10|46|ML/MIN|||||F|||20060922152300|GH
+OBX|11|ST|84999.Z159||DNR||||||F||||GH
+OBX|12|NM|84999.Z174^Anion Gap||6|mmol/L|||F
+ORC|RE|F4334|51013174200601|||||^||||||||||||||||
+OBR|1|F4334|51013174200601|80048^BASIC METABOLIC PANEL|||20060922152300||||||||^^^^^|023901^PACLAB| ||||||^|CH|F|^^|^^^20060922162659^^GHA||^|||^^^^^^ ^^^^|^^^^^^^^^^|^^^^^^^^^^|^^^^^^^^^^||||||||||
+OBX|1|NM|84295^SODIUM^GH|1|145|mmol/L|||||F|||20060922152300|GH
+OBX|2|NM|84132^POTASSIUM^GH|2|5.2|mmol/L|||||F|||20060922152300|GH
+OBX|3|NM|82435^CHLORIDE^GH|3|108|mmol/L|||||F|||20060922152300|GH
+OBX|4|NM|82374^CARBON DIOXIDE^GH|4|31|mmol/L|||||F|||20060922152300|GH
+"""
 
-inc_last = (path, inc)->
-  idx = path[path.length - 1]
-  ppath = path[0..-2]
-  ppath.concat([idx + inc])
+msg = parse(ORU_R01, msg_str)
 
-_null = -> null
+res = bundle (bndl)->
+  msg 'PID', (pid)->
+    bndl.$entry 'Patient', (pt)->
+      pt_id = 'temporal'
+      pt.$el 'id', pt_id
+      pid 5, (name)->
+        pt.$el 'name', (nm)->
+          name 1, (fname)->
+            nm.$el 'family', fname
+          name 2, (gname)->
+            nm.$el 'given', gname
+      pid 'PV1', (pv1)->
+        console.log(' pv1')
+      pid 'ORC', (orc)->
+        bndl.$entry 'DiagnosticImaging', (dm)->
+          orc 2, (order_id)->
+            dm.$el 'identifier', order_id(1)
+          orc 'OBR', (obr)->
+            obr 'OBX', (obx)->
+              bndl.$entry 'Observation', (obs)->
+                obx 3, (obx_type)->
+                  obs.$el 'type', obx_type(2)
 
-zipper = (tree, path)->
-  if path.length == 0
-    return { val: _null, up: _null, right: _null, left: _null, down: -> zipper(tree, [0])}
-
-  idx = path[path.length - 1]
-  ppath = path[0..-2]
-  val = get_in(tree, path)
-  val: val
-  down: ->
-    npath = ppath.concat([idx + 1, 0])
-    # TODO: may be check value after
-    # so val will return null not down, up, right
-    # cursor problem emacs vs vim :)
-    zipper(tree,npath) if get_in(tree, npath)
-  up: ->
-    npath = if ppath.length == 0 then [] else ppath[0..-2].concat([0])
-    zipper(tree,npath)
-  right: ->
-    npath = inc_last(ppath,1).concat([0])
-    zipper(tree,npath) if get_in(tree, npath)
-  left: ->
-    npath = inc_last(ppath,-1).concat([0])
-    zipper(tree,npath) if get_in(tree, npath)
-
-
-
-machine = (zip)->
-  pp "Enter #{zip.val}"
-
-  state: -> zip.val
-  # TODO: move path to zipper
-  # should return vec of zippers
-  path: ->
-    res = [zip.val]
-    up = zip.up()
-    while up
-      val = up.val
-      res.push(val)  if val
-      up = up.up()
-    res.reverse()
-  next: (word)->
-    return machine(zip) if word == zip.val
-    ch = zip.down()
-    while ch
-      return machine(ch) if word == ch.val
-      ch = ch.right()
-    up = zip
-    while up
-      return machine(up) if word == up.val
-      rght = up.right()
-      while rght
-        return machine(rght) if word == rght.val
-        rght = rght.right()
-      up = up.up()
-    # ignore
-    machine(zip)
-
-
-msg = ['PID', 'PV1', 'PV2','ORC', 'OBR', 'OBX', 'NTE', 'NTE', 'OBX', 'ORC', 'OBR', 'OBX','OBX']
-
-msg_desc = ['PID',                 # [0]
-             ['PV1',               # [1, 0]
-              ['PV2']],            # [1, 1, 0]
-             ['ORC',               # [2, 0]
-               ['OBR'],            # [2, 1,0]
-               ['NTE'],            # [2, 2,0]
-               ['OBX', ['NTE']]]]  # [2, 3, 1, 0]
-
-
-m = machine(zipper(msg_desc, []))
-
-for seg in msg
-  pp seg
-  m = m.next(seg)
-  pp "-> Enter #{m.path()}"
+console.log JSON.stringify(res)
