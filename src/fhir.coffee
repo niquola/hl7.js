@@ -6,7 +6,6 @@ _is_obj = (x)-> Object.prototype.toString.call(x) == '[object Object]'
 
 mk_builder = (obj)->
   obj.$el = (attr, cb_or_v)->
-    console.log(attr, cb_or_v)
     if _is_fn(cb_or_v)
       nobj = {}
       obj[attr] = nobj

@@ -45,19 +45,22 @@ res = bundle (bndl)->
       pid 5, (name)->
         pt.$el 'name', (nm)->
           name 1, (fname)->
-            nm.$el 'family', fname
+            nm.$els 'family', fname
           name 2, (gname)->
-            nm.$el 'given', gname
-      pid 'PV1', (pv1)->
-        console.log(' pv1')
-      pid 'ORC', (orc)->
-        bndl.$entry 'DiagnosticImaging', (dm)->
-          orc 2, (order_id)->
-            dm.$el 'identifier', order_id(1)
-          orc 'OBR', (obr)->
-            obr 'OBX', (obx)->
-              bndl.$entry 'Observation', (obs)->
-                obx 3, (obx_type)->
-                  obs.$el 'type', obx_type(2)
+            nm.$els 'given', gname
+    pid 'PV1', (pv1)->
+      console.log(' pv1')
+    pid 'ORC', (orc)->
+      bndl.$entry 'DiagnosticImaging', (dm)->
+        orc 2, (order_id)->
+          dm.$el 'identifier', order_id(1)
+        orc 'OBR', (obr)->
+          obr 'OBX', (obx)->
+            bndl.$entry 'Observation', (obs)->
+              obx 3, (obx_type)->
+                obs.$el 'type', (tp)->
+                  tp.$els 'coding', (cd)->
+                    cd.$el 'code', obx_type(1)
+                    cd.$el 'display', obx_type(2)
 
 console.log JSON.stringify(res)
