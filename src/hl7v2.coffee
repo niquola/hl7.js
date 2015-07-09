@@ -82,7 +82,8 @@ _parse = (m)->
 mk_fld_sel = (fld)->
   (sel, cb)->
     x = fld[sel - 1]
-    if cb then cb(x) if x else x
+    if x
+      if cb then cb(x) else x
 
 _is_num = (x)-> not isNaN(x * 1)
 

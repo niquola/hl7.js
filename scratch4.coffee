@@ -10,7 +10,7 @@ ORU_R01 = ['PID',
 
 msg_str = """
 MSH|^~\`|674|GHC|SISRL|PAML|20060922162830|L674-200609221628310220|ORU^R01|ORU000016168|P|2.3|||AL |AL
-PID|1||1478895^4^M10^PA||XTEST^PATIENT^||19591123| F||||||||||||||||||||||
+PID|||MRN12345^5^M11||APPLESEED^JOHN^A^III&Alias^Alias^A^||19710101|M||C|1 CATALYZE STREET^^MADISON^WI^53005-1020|GL|(414)379-1212|(414)271-3434||S||MRN12345001^2^M10|123456789|987654^NC|
 PV1||E||E|||07369^DORIAN^ARMAND^H^^^MD^^^^^^^|||EMR||||||||E|visit-number|8814|5||||||||||||||||||001|OCCPD||||201101240700
 ORC|RE|F4334|51013174200601|||||^||||||||||||||||
 OBR|1|F4334|51013174200601|80048^BASIC METABOLIC PANEL|||20060922152300||||||||^^^^^|023901^PACLAB| ||||||^|CH|F|^^|^^^20060922162659^^GHA||^|||^^^^^^ ^^^^|^^^^^^^^^^|^^^^^^^^^^|^^^^^^^^^^||||||||||
@@ -63,3 +63,7 @@ res = hl7.fhir.bundle (bndl)->
                     cd.$el 'display', obx_type(2)
 
 console.log JSON.stringify(res)
+
+msg 'PID', (pid)->
+  pid 13, (ph)->
+    console.log 'pid 13'
