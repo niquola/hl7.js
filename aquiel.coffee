@@ -1,3 +1,6 @@
+# npm install -g coffee-script
+# coffee aquiel.coffee
+
 hl7  = require('./src/hl7')
 p = (x)->
   console.log(JSON.stringify(x, null, 2))
@@ -90,4 +93,9 @@ res = hl7.fhir.resource 'Patient', (pt) ->
               contact_rel_code.$el 'code', nk_type(1)
               contact_rel_code.$el 'system', 'http://hl7.org/fhir/patient-contact-relationship'
 
-p(res)
+# p(res)
+
+assert = require("assert")
+
+assert.equal(-1, [1,2,3].indexOf(5))
+assert.equal(1, [1,2,3].indexOf(2))
