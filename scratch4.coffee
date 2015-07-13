@@ -62,8 +62,5 @@ res = hl7.fhir.bundle (bndl)->
                     cd.$el 'code', obx_type(1)
                     cd.$el 'display', obx_type(2)
 
-console.log JSON.stringify(res)
-
-msg 'PID', (pid)->
-  pid 13, (ph)->
-    console.log 'pid 13'
+#console.log JSON.stringify(res)
+p = (x)-> console.log(x)

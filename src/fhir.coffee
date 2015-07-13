@@ -42,9 +42,9 @@ exports.resource = resource
 
 bundle = (cb)->
   entry = []
-  bndl = {etntry: entry}
+  bndl = {entry: entry}
   bndl.$entry = (tp, cb)->
-    entry.push(resource(tp,cb))
+    entry.push({resource: resource(tp,cb)})
   cb(bndl)
   bndl
 
