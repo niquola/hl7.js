@@ -97,5 +97,14 @@ res = hl7.fhir.resource 'Patient', (pt) ->
 
 assert = require("assert")
 
-assert.equal(-1, [1,2,3].indexOf(5))
-assert.equal(1, [1,2,3].indexOf(2))
+assert.equal(2, res.name.length)
+
+assert.equal(1, res.name[0].family.length)
+assert.equal("APPLESEED", res.name[0].family[0])
+assert.equal(1, res.name[0].given.length)
+assert.equal("JOHN", res.name[0].given[0])
+
+assert.equal(1, res.name[1].family.length)
+assert.equal("Alias", res.name[1].family[0])
+assert.equal(1, res.name[1].given.length)
+assert.equal("Alias", res.name[1].given[0])
