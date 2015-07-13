@@ -1,3 +1,9 @@
+hl7  = require('./src/hl7')
+p = (x)->
+  console.log(JSON.stringify(x, null, 2))
+
+msg_desc = ["PID", ["NK1"], ["PV1"]]
+
 msg_str = """
 MSH|^~&|EPICADT|DH|LABADT|DH|201301011226||ADT^A01|HL7MSG00001|P|2.3|
 EVN|A01|201301011223||
@@ -6,10 +12,9 @@ NK1|1|GEORGE^FRED^J|WIFE||||||NK^NEXT OF KIN
 PV1|1|I|2000^2012^01||||004777^GOOD^SIDNEY^J.|||SUR||||ADM|A0|
 """
 
-msg_desc = ["PID", ["NK1"], ["PV1"]]
+msg = hl7.v2.parse(msg_desc, msg_str)
 
-(msg,fhir)->
-res = fhir.resource 'Patient', (pt) ->
+res = hl7.fhir.resource 'Patient', (pt) ->
   msg 'PID', (pid) ->
     pid 13, (hph) ->
       pt.$els 'telecom', (tel) ->
@@ -85,4 +90,4 @@ res = fhir.resource 'Patient', (pt) ->
               contact_rel_code.$el 'code', nk_type(1)
               contact_rel_code.$el 'system', 'http://hl7.org/fhir/patient-contact-relationship'
 
-return res
+p(res)
