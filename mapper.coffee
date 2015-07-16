@@ -1,9 +1,11 @@
 # npm install -g coffee-script
 # coffee mapper.coffee
 
-
 net = require('net')
 hl7 = require('./src/hl7')
+
+p = (x)->
+  console.log(JSON.stringify(x, null, 2))
 
 if (process.argv.length < 6)
   console.log('Usage: coffee mapper.coffee SERVER_HOST SERVER_PORT CLIENT_HOST CLIENT_PORT')
@@ -19,10 +21,10 @@ console.log('SERVER_PORT: ' + SERVER_PORT)
 console.log('CLIENT_HOST: ' + CLIENT_HOST)
 console.log('CLIENT_PORT: ' + CLIENT_PORT)
 
-p = (x)->
-  console.log(JSON.stringify(x, null, 2))
+DESCRIPTION = ["PID", ["NK1"], ["PV1"]]
 
-msg_desc = ["PID", ["NK1"], ["PV1"]]
+console.log('DESCRIPTION:')
+p(DESCRIPTION)
 
 mapper = (desc, msg) ->
   msg = hl7.v2.parse(desc, msg)
@@ -102,38 +104,37 @@ mapper = (desc, msg) ->
                 contact_rel_code.$el 'code', nk_type(1)
                 contact_rel_code.$el 'system', 'http://hl7.org/fhir/patient-contact-relationship'
 
-  # p(res)
   res
 
-msg_str = """
-MSH|^~&|EPICADT|DH|LABADT|DH|201301011226||ADT^A01|HL7MSG00001|P|2.3|
-EVN|A01|201301011223||
-PID|||MRN12345^5^M11||APPLESEED3^JOHN3^A3^III&Alias3^Alias3^A3^||19710101|M||C|1 CATALYZE STREET^^MADISON^WI^53005-1020|GL|(414)379-1212|(414)271-3434||S||MRN12345001^2^M10|123456789|987654^NC|
-NK1|1|GEORGE^FRED^J|WIFE||||||NK^NEXT OF KIN
-PV1|1|I|2000^2012^01||||004777^GOOD^SIDNEY^J.|||SUR||||ADM|A0|
-"""
-p(mapper(msg_desc, msg_str))
-console.log("##########################")
-
 client = new net.Socket()
-server = net.createServer (sock) ->
-  console.log('CONNECTED FROM: ' + sock.remoteAddress + ':' + sock.remotePort)
-  sock.on 'data', (data) ->
-    console.log('DATA ' + sock.remoteAddress + ': ' + data)
-    sock.write('You said "' + data + '"');
-    client.write(data);
-  sock.on 'close', (data) ->
-    console.log('CLOSED FROM: ' + sock.remoteAddress + ' ' + sock.remotePort)
 
-client.connect WRITE_PORT, WRITE_HOST, () ->
-  console.log('CONNECTED TO: ' + WRITE_HOST + ':' + WRITE_PORT)
+server = net.createServer (sock) ->
+  console.log('IN: ' + sock.remoteAddress + ':' + sock.remotePort)
+  sock.on 'data', (data) ->
+    console.log('GET HL7 ' + sock.remoteAddress + ': ' + data)
+    console.log('$$$')
+    sock.write('GET HL7')
+    messages = data.toString().split(/\r\n/)
+    p(messages)
+    for m in messages
+      console.log(m)
+      resource = mapper(DESCRIPTION, m)
+      json = JSON.stringify(resource)
+      console.log('GET JSON')
+      p(json)
+      client.write(json)
+    console.log('FINISHED ##########')
+  sock.on 'close', (data) ->
+    console.log('IN CLOSED')
+
+client.connect CLIENT_PORT, CLIENT_HOST, () ->
+  console.log('OUT: ' + CLIENT_HOST + ':' + CLIENT_PORT)
 
 client.on 'data', (data) ->
   console.log('DATA: ' + data)
-  # client.destroy()
 
 client.on 'close', () ->
   console.log('Connection closed')
 
-server.listen(LISTEN_PORT, LISTEN_HOST)
-console.log('Server listening on ' + LISTEN_HOST + ':' + LISTEN_PORT)
+server.listen(SERVER_PORT, SERVER_HOST)
+console.log('Server listening on ' + SERVER_HOST + ':' + SERVER_PORT)
