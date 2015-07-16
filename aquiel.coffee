@@ -17,6 +17,20 @@ PV1|1|I|2000^2012^01||||004777^GOOD^SIDNEY^J.|||SUR||||ADM|A0|
 
 msg = hl7.v2.parse(msg_desc, msg_str)
 
+xpn_HumanName = (xpn, HumanName)->
+          if xpn
+                    use: 'usual',
+                    family: [xpn[0]],
+                    given: [xpn[1]],
+                    prefix: [xpn[4]],
+                    suffix: [xpn[3]]
+    pid 5, (name) ->      
+      pt.$els 'name', (pt_name) ->
+         name 1, (family)->
+           pt_name.$els 'family', family
+         name 2, (given) ->
+           pt_name.$els 'given', given
+
 res = hl7.fhir.resource 'Patient', (pt) ->
   msg 'PID', (pid) ->
     pid 13, (hph) ->
