@@ -117,42 +117,24 @@ WRITE_HOST = '127.0.0.1'
 WRITE_PORT = 9696
 
 client = new net.Socket()
-net.createServer((sock) ->
+server = net.createServer (sock) ->
   console.log('CONNECTED FROM: ' + sock.remoteAddress + ':' + sock.remotePort)
-    sock.on 'data', (data) ->
-      console.log('DATA ' + sock.remoteAddress + ': ' + data)
-      sock.write('You said "' + data + '"');
+  sock.on 'data', (data) ->
+    console.log('DATA ' + sock.remoteAddress + ': ' + data)
+    sock.write('You said "' + data + '"');
+    client.write(data);
+  sock.on 'close', (data) ->
+    console.log('CLOSED FROM: ' + sock.remoteAddress + ' ' + sock.remotePort)
 
-    sock.on 'close', (data) ->
-      console.log('CLOSED FROM: ' + sock.remoteAddress + ' ' + sock.remotePort)
+client.connect WRITE_PORT, WRITE_HOST, () ->
+  console.log('CONNECTED TO: ' + WRITE_HOST + ':' + WRITE_PORT)
 
-).listen(LISTEN_PORT, LISTEN_HOST)
+client.on 'data', (data) ->
+  console.log('DATA: ' + data)
+  # client.destroy()
 
-console.log('Server listening on ' + HOST + ':' + PORT)
+client.on 'close', () ->
+  console.log('Connection closed')
 
-
-
-
-
-client.connect(PORT, HOST, function () {
-
-    console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-    // Write a message to the socket as soon as the client is connected, the server will receive it as message from the client
-    client.write(contents);
-
-});
-
-// Add a 'data' event handler for the client socket
-// data is what the server sent to this socket
-client.on('data', function (data) {
-
-    console.log('DATA: ' + data);
-    // Close the client socket completely
-    client.destroy();
-
-});
-
-// Add a 'close' event handler for the client socket
-client.on('close', function () {
-    console.log('Connection closed');
-});
+server.listen(LISTEN_PORT, LISTEN_HOST)
+console.log('Server listening on ' + LISTEN_HOST + ':' + LISTEN_PORT)
